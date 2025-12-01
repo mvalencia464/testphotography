@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -11,13 +11,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return sessionStorage.getItem('mb_admin_auth') === 'true';
+    return localStorage.getItem('mb_admin_auth') === 'true';
   });
 
   const login = (password: string) => {
     if (password === 'psalm145') {
       setIsAuthenticated(true);
-      sessionStorage.setItem('mb_admin_auth', 'true');
+      localStorage.setItem('mb_admin_auth', 'true');
       return true;
     }
     return false;
@@ -25,7 +25,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem('mb_admin_auth');
+    localStorage.removeItem('mb_admin_auth');
   };
 
   return (
@@ -42,3 +42,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
