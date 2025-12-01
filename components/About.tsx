@@ -56,7 +56,7 @@ export const About: React.FC = () => {
             <div className="relative">
                 <div className={`absolute -inset-4 border-2 border-${themeColor}-600/30 transform translate-x-4 translate-y-4`}></div>
                 <img 
-                    src="https://images.unsplash.com/photo-1552168324-d612d77725e3?q=80&w=800&auto=format&fit=crop" 
+                    src="https://storage.googleapis.com/msgsndr/IXfjxQ6NAL6Cng2RQk7i/media/e44074d3-b676-4282-a2e7-2b497a8a92e6.webp" 
                     alt="Photographer with Camera" 
                     className="relative w-full aspect-[4/5] object-cover shadow-2xl grayscale hover:grayscale-0 transition-all duration-700"
                 />
