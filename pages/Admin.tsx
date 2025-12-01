@@ -3,6 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { useAuth } from '../context/AuthContext';
+import { useHighLevel } from '../hooks/useHighLevel';
 import { Upload, Trash2, Home, CheckCircle, Lock, LogOut, Edit2, X, Save, Palette, Wand2, Loader2, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Photo, ThemeColor } from '../types';
@@ -12,10 +13,12 @@ export const Admin: React.FC = () => {
   const { photos, addPhoto, deletePhoto, updatePhoto } = usePortfolio();
   const { config, updateTheme, updateContent } = useSiteConfig();
   const { isAuthenticated, login, logout } = useAuth();
+  const { uploadFile } = useHighLevel();
   
   const [activeTab, setActiveTab] = useState<'photos' | 'settings'>('photos');
   const [isDragging, setIsDragging] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   
   // Auth Form State
   const [passwordInput, setPasswordInput] = useState('');
@@ -43,43 +46,79 @@ export const Admin: React.FC = () => {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    setUploading(true);
 
     const files = Array.from(e.dataTransfer.files) as File[];
-    files.forEach(file => {
+    let successCount = 0;
+
+    for (const file of files) {
       if (file.type.startsWith('image/')) {
-        const newPhoto: Photo = {
-          id: Date.now().toString() + Math.random().toString(),
-          url: URL.createObjectURL(file),
-          title: file.name.split('.')[0], 
-          category: 'Uploads'
-        };
-        addPhoto(newPhoto);
-      }
-    });
-
-    if (files.length > 0) {
-      showNotification(`Successfully added ${files.length} images!`);
-    }
-  }, [addPhoto]);
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files) as File[];
-       files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-          const newPhoto: Photo = {
-            id: Date.now().toString() + Math.random().toString(),
-            url: URL.createObjectURL(file),
-            title: file.name.split('.')[0],
-            category: 'Uploads'
-          };
-          addPhoto(newPhoto);
+        try {
+            const response = await uploadFile(file);
+            // GHL upload response usually has the url. Adjust based on actual API response.
+            // Assuming response has .url or .meta.url
+            const imageUrl = response.url || response.meta?.url;
+            
+            if (imageUrl) {
+                const newPhoto: Photo = {
+                  id: Date.now().toString() + Math.random().toString(),
+                  url: imageUrl,
+                  title: file.name.split('.')[0], 
+                  category: 'Uploads'
+                };
+                addPhoto(newPhoto);
+                successCount++;
+            } else {
+                console.error("No URL returned from upload", response);
+            }
+        } catch (err) {
+            console.error("Failed to upload file", file.name, err);
         }
-      });
-      showNotification(`Successfully added ${files.length} images!`);
+      }
+    }
+    setUploading(false);
+
+    if (successCount > 0) {
+      showNotification(`Successfully uploaded ${successCount} images!`);
+    } else if (files.length > 0) {
+      showNotification("Failed to upload images.");
+    }
+  }, [addPhoto, uploadFile]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setUploading(true);
+      const files = Array.from(e.target.files) as File[];
+      let successCount = 0;
+
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+           try {
+                const response = await uploadFile(file);
+                const imageUrl = response.url || response.meta?.url;
+                
+                if (imageUrl) {
+                    const newPhoto: Photo = {
+                      id: Date.now().toString() + Math.random().toString(),
+                      url: imageUrl,
+                      title: file.name.split('.')[0],
+                      category: 'Uploads'
+                    };
+                    addPhoto(newPhoto);
+                    successCount++;
+                }
+           } catch (err) {
+               console.error("Failed to upload file", file.name, err);
+           }
+        }
+      }
+      setUploading(false);
+      if (successCount > 0) {
+        showNotification(`Successfully uploaded ${successCount} images!`);
+      }
     }
   };
 
@@ -327,13 +366,19 @@ export const Admin: React.FC = () => {
               >
                 <div className="flex flex-col items-center gap-4">
                   <div className={`p-4 rounded-full ${isDragging ? 'bg-amber-500/20' : 'bg-stone-800'}`}>
-                      <Upload className={`h-8 w-8 ${isDragging ? 'text-amber-500' : 'text-stone-400'}`} />
+                      {uploading ? (
+                          <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
+                      ) : (
+                          <Upload className={`h-8 w-8 ${isDragging ? 'text-amber-500' : 'text-stone-400'}`} />
+                      )}
                   </div>
                   <div>
-                      <p className="text-xl font-medium text-white mb-2">Drag and drop photos here</p>
+                      <p className="text-xl font-medium text-white mb-2">
+                        {uploading ? "Uploading to Media Library..." : "Drag and drop photos here"}
+                      </p>
                       <p className="text-stone-500 mb-6">or click to browse from your computer</p>
                       
-                      <label className="cursor-pointer bg-amber-600 hover:bg-amber-500 text-white px-6 py-2.5 rounded text-sm font-bold uppercase tracking-wider transition-colors inline-block">
+                      <label className={`cursor-pointer bg-amber-600 hover:bg-amber-500 text-white px-6 py-2.5 rounded text-sm font-bold uppercase tracking-wider transition-colors inline-block ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                           Select Files
                           <input 
                               type="file" 
@@ -341,6 +386,7 @@ export const Admin: React.FC = () => {
                               accept="image/*" 
                               className="hidden" 
                               onChange={handleFileSelect} 
+                              disabled={uploading}
                           />
                       </label>
                   </div>
