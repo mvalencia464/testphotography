@@ -25,6 +25,13 @@ export const useGitHub = () => {
         setLoading(true);
         setError(null);
 
+        if (!token) {
+            const msg = "GitHub token is missing. Please add VITE_GITHUB_TOKEN to your .env.local file or Netlify environment variables.";
+            console.error(msg);
+            setLoading(false);
+            return { success: false, message: msg };
+        }
+
         try {
             const contentString = JSON.stringify(content, null, 2);
             const encodedContent = btoa(unescape(encodeURIComponent(contentString)));
@@ -39,6 +46,10 @@ export const useGitHub = () => {
                     },
                 }
             );
+
+            if (getFileResponse.status === 403 || getFileResponse.status === 401) {
+                 throw new Error("Authentication failed. Check if your token has 'repo' scope (Classic) or 'Contents' Read & Write permissions (Fine-grained).");
+            }
 
             let currentSha: string | undefined;
             if (getFileResponse.ok) {
@@ -68,6 +79,9 @@ export const useGitHub = () => {
             );
 
             if (!commitResponse.ok) {
+                if (commitResponse.status === 403 || commitResponse.status === 401) {
+                    throw new Error("Permission denied. Check if your token has 'repo' scope (Classic) or 'Contents' Read & Write permissions (Fine-grained).");
+                }
                 const errorData = await commitResponse.json();
                 throw new Error(errorData.message || 'Failed to commit changes to GitHub');
             }
@@ -81,6 +95,7 @@ export const useGitHub = () => {
             };
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to save changes to GitHub';
+            console.error("GitHub Save Error:", err);
             setError(errorMessage);
             return {
                 success: false,
