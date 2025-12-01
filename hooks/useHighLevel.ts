@@ -140,7 +140,12 @@ export const useHighLevel = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${HIGHLEVEL_API_BASE}/medias/files/${fileId}`, {
+      const params = new URLSearchParams({
+        altType: 'location',
+        altId: locationId
+      });
+
+      const response = await fetch(`${HIGHLEVEL_API_BASE}/medias/${fileId}?${params.toString()}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
