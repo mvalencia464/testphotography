@@ -1,19 +1,18 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SiteConfig, SiteContent, ThemeColor } from '../types';
+import defaultContent from '../src/data/siteContent.json';
+import { useGitHub } from '../hooks/useGitHub';
 
 interface SiteConfigContextType {
   config: SiteConfig;
   updateTheme: (color: ThemeColor) => void;
   updateContent: (content: Partial<SiteContent>) => void;
+  saveToGitHub: () => Promise<{ success: boolean; message: string }>;
+  isSaving: boolean;
 }
 
-const DEFAULT_CONTENT: SiteContent = {
-  heroHeadline: "Capturing Awe-Inspiring Moments",
-  heroSubheadline: "You do life. We'll capture the memory.",
-  aboutHeadline: "Capturing God's Creation & Life's Precious Moments",
-  aboutText: "My journey from amateur to professional photographer has been guided by a simple belief: life flows like a stream, but some moments deserve to be stopped and cherished forever."
-};
+const DEFAULT_CONTENT: SiteContent = defaultContent as SiteContent;
 
 const SiteConfigContext = createContext<SiteConfigContextType | undefined>(undefined);
 
@@ -25,6 +24,8 @@ export const SiteConfigProvider: React.FC<{ children: ReactNode }> = ({ children
       content: DEFAULT_CONTENT
     };
   });
+
+  const { saveContent, loading: isSaving } = useGitHub();
 
   useEffect(() => {
     localStorage.setItem('mb_site_config', JSON.stringify(config));
@@ -41,8 +42,12 @@ export const SiteConfigProvider: React.FC<{ children: ReactNode }> = ({ children
     }));
   };
 
+  const saveToGitHub = async () => {
+    return await saveContent(config.content);
+  };
+
   return (
-    <SiteConfigContext.Provider value={{ config, updateTheme, updateContent }}>
+    <SiteConfigContext.Provider value={{ config, updateTheme, updateContent, saveToGitHub, isSaving }}>
       {children}
     </SiteConfigContext.Provider>
   );
