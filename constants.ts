@@ -8,62 +8,8 @@ export const BRAND = {
   location: "Tennessee & Surrounding Areas"
 };
 
-export const INITIAL_PHOTOS: Photo[] = [
-  {
-    id: '1',
-    url: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=800&auto=format&fit=crop',
-    title: 'The Sprint',
-    category: 'Sports'
-  },
-  {
-    id: '2',
-    url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=800&auto=format&fit=crop',
-    title: 'Morning Mist',
-    category: 'Nature'
-  },
-  {
-    id: '3',
-    url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=800&auto=format&fit=crop',
-    title: 'Touchdown',
-    category: 'Sports'
-  },
-  {
-    id: '4',
-    url: 'https://images.unsplash.com/photo-1611000377884-3c6608552735?q=80&w=800&auto=format&fit=crop',
-    title: 'Eagle Watch',
-    category: 'Wildlife'
-  },
-  {
-    id: '5',
-    url: 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=800&auto=format&fit=crop',
-    title: 'Grand Slam',
-    category: 'Sports'
-  },
-  {
-    id: '6',
-    url: 'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?q=80&w=800&auto=format&fit=crop',
-    title: 'Luxury Estate',
-    category: 'Real Estate'
-  },
-  {
-    id: '7',
-    url: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=800&auto=format&fit=crop',
-    title: 'Family Bond',
-    category: 'Family'
-  },
-  {
-    id: '8',
-    url: 'https://images.unsplash.com/photo-1533282243916-5bc77b78996e?q=80&w=800&auto=format&fit=crop',
-    title: 'Elk in Meadow',
-    category: 'Wildlife'
-  },
-  {
-    id: '9',
-    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
-    title: 'Smoky Mountains',
-    category: 'Landscape'
-  }
-];
+export const INITIAL_PHOTOS: Photo[] = [];
+
 
 export const PACKAGES: ServicePackage[] = [
   {

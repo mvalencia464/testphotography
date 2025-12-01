@@ -118,7 +118,8 @@ export const useHighLevel = () => {
           'Authorization': `Bearer ${token}`,
           'Version': API_VERSION,
           'Accept': 'application/json'
-        }
+        },
+        cache: 'no-store'
       });
 
       if (!response.ok) {
