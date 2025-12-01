@@ -1,129 +1,83 @@
-# HighLevel Integration Guide - PROVEN WORKING SETUP ✅
+# HighLevel Integration Guide - Contacts & Media Gallery
 
-This guide explains how to integrate your [APP_NAME] React form with HighLevel using Private Integrations.
+This project is fully integrated with HighLevel (GHL) for both **Lead Generation** and **Cloud Media Storage**. 
 
-**🎉 STATUS: SUCCESSFULLY TESTED AND WORKING**
-This integration has been tested and confirmed working with real HighLevel credentials, including image upload to Media Library. Follow these exact steps for guaranteed success.
+**Status:** ✅ PRODUCTION READY
+**API Version:** `2021-07-28`
 
-**🆕 NEW: Image Upload Feature**
-The form now supports uploading project images directly to HighLevel's Media Library with full contact association!
+## 🌟 Core Features
 
-## ⚠️ CRITICAL: DO NOT MODIFY THESE WORKING FILES
+### 1. Contact Form (Lead Gen)
+- **Direct CRM Entry:** Submissions create a Contact in HighLevel.
+- **File Attachments:** Users can upload an image with their inquiry. The image is uploaded to GHL Media Library, and the link is saved to a custom field on the contact.
+- **Tags:** Automatically applies tags (e.g., "Website Lead", "Service Type").
 
-**The following files are configured correctly and WORKING. Do not modify unless absolutely necessary:**
+### 2. Admin Gallery (Cloud Storage)
+- **Source of Truth:** The portfolio gallery is **synced 1:1 with the HighLevel Media Library**.
+- **Uploads:** Admin uploads go directly to GHL.
+- **Deletions:** Deleting a photo in the Admin dashboard permanently removes it from GHL storage.
+- **Cross-Device Sync:** Changes made on one device appear on all devices immediately.
 
-### Core Integration Files (DO NOT CHANGE):
-- `hooks/useHighLevel.ts` - API communication logic + image upload
-- `components/Contact.tsx` - Form component with validation + image UI
-- `utils/formValidation.ts` - Validation rules + image validation
-- `.env.local` - Environment variables (only change values, not structure)
+---
 
-### Key Configuration Values (PROVEN WORKING):
-```javascript
-// API Endpoint (DO NOT CHANGE)
-const HIGHLEVEL_API_BASE = 'https://services.leadconnectorhq.com';
+## 🛠️ Configuration & Setup
 
-// API Version (DO NOT CHANGE)
-const API_VERSION = '2021-07-28';
+### Required Scopes
+Your Private Integration Token must have these scopes enabled:
+- `contacts.write` (Create leads)
+- `contacts.read` (Check for existing)
+- `medias.write` (Upload images)
+- `medias.readonly` (Fetch gallery images)
+- `businesses.read` (Location access)
 
-// Headers (DO NOT CHANGE)
-'Authorization': `Bearer ${token}`,
-'Content-Type': 'application/json',
-'Version': '2021-07-28',
-'Accept': 'application/json'
-
-// Endpoints (DO NOT CHANGE)
-POST /contacts/  // Note the trailing slash!
-POST /medias/upload-file  // For image uploads
-```
-
-### Environment Variable Names (DO NOT CHANGE):
+### Environment Variables (`.env.local`)
 ```bash
-VITE_HIGHLEVEL_TOKEN=    # Must start with VITE_
-VITE_HIGHLEVEL_LOCATION_ID=    # Must start with VITE_
+VITE_HIGHLEVEL_TOKEN=pit-xxxx-xxxx-xxxx           # Private Integration Token
+VITE_HIGHLEVEL_LOCATION_ID=xxxx-xxxx-xxxx         # Location ID
 ```
 
-## 🔑 CRITICAL SUCCESS FACTORS
+---
 
-### Why This Setup Works (Unlike Others)
-1. **Proper API Version**: Uses `Version: 2021-07-28` header (many tutorials miss this)
-2. **Correct Endpoints**: Uses `/contacts/` and `/medias/upload-file` correctly
-3. **Proper Authorization**: Uses `Bearer` token format correctly
-4. **Field Mapping**: Maps React form fields to exact HighLevel API expectations
-5. **Error Handling**: Comprehensive error handling prevents silent failures
-6. **Environment Variables**: Uses Vite's `VITE_` prefix for client-side access
-7. **Controlled Components**: React form uses controlled inputs for reliable state management
-8. **Real-time Validation**: Prevents API errors by validating before submission
-9. **Image Upload Integration**: Seamlessly uploads to Media Library with contact association
-10. **Duplicate Prevention**: Prevents double uploads and submissions
+## 📡 API Implementation Details
 
-## 🚀 EXACT SETUP STEPS (TESTED & WORKING)
+The integration is centralized in `hooks/useHighLevel.ts`.
 
-### Step 1: HighLevel Private Integration Setup
-**⚠️ CRITICAL: Follow these exact steps**
+### 1. Fetching the Gallery
+Retrieves all images associated with the location to build the portfolio.
+- **Endpoint:** `GET /medias/files`
+- **Params:** `altId={locationId}`, `altType=location`, `type=file`, `limit=100`
+- **Cache Strategy:** `no-store` (Ensures fresh list on reload)
 
-1. **Navigate to Private Integrations:**
-   - Login to HighLevel
-   - Go to Settings → Other Settings → Private Integrations
-   - Click "Create new Integration"
+### 2. Uploading Files
+Used by both the Contact Form and Admin Dashboard.
+- **Endpoint:** `POST /medias/upload-file`
+- **Body:** `FormData` with `file` field.
+- **Returns:** `{ fileId, url, ... }`
 
-2. **Configure Integration (EXACT SETTINGS):**
-   ```
-   Name: [APP_NAME] Website
-   Description: React form integration for website leads
-   ```
+### 3. Deleting Files
+**⚠️ Important Implementation Detail:**
+Deleting requires the same location context query parameters as fetching, or it will fail with 400/404 errors.
+- **Endpoint:** `DELETE /medias/{fileId}`
+- **Query Params:** `?altId={locationId}&altType=location`
 
-3. **Select Required Scopes (MINIMUM REQUIRED):**
-   - ✅ `contacts.write` (REQUIRED - creates contacts)
-   - ✅ `contacts.read` (OPTIONAL - but recommended)
-   - ✅ `businesses.read` (REQUIRED - for location access)
-   - ✅ `medias.write` (EXPERIMENTAL - for image upload to media library)
+### 4. Creating Contacts
+- **Endpoint:** `POST /contacts/`
+- **Headers:** `Version: 2021-07-28` (Critical)
+- **Payload:** Includes `customFields` for storing the "Project Image URL".
 
-4. **Save and Copy Credentials:**
-   - Click "Save"
-   - Copy the Private Integration Token (starts with `pit-`)
-   - Note your Location ID (found in Settings → Business Profile)
+---
 
-### Step 2: Environment Configuration
-**⚠️ CRITICAL: Use exact variable names**
+## 📂 File Structure
 
-1. **Create/Edit `.env.local` file in project root:**
-   ```bash
-   # HighLevel Private Integration Configuration
-   VITE_HIGHLEVEL_TOKEN=pit-your-actual-token-here
-   VITE_HIGHLEVEL_LOCATION_ID=your-actual-location-id-here
-   ```
+- **`hooks/useHighLevel.ts`**: The brain. Contains all `fetch` calls to GHL.
+- **`context/PortfolioContext.tsx`**: The state manager. Calls `fetchFiles` on mount and provides the photo list to the app.
+- **`pages/Admin.tsx`**: UI for uploading/deleting. Optimistically updates UI while calling API.
+- **`constants.ts`**: `INITIAL_PHOTOS` is empty (`[]`) to ensure we only show GHL images.
 
-2. **IMPORTANT NOTES:**
-   - Must use `VITE_` prefix for Vite to expose to client
-   - Token format: `pit-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-   - Location ID format: Usually alphanumeric string
-   - NO quotes around values in .env file
-   - NO spaces around the = sign
+## 🐛 Troubleshooting
 
-3. **Restart Development Server:**
-   ```bash
-   # Kill existing server (Ctrl+C)
-   npm run dev
-   ```
-
-## 📋 Features Implemented
-
-### ✅ Form Integration
-- **Real-time validation** with field-level error display
-- **Loading states** with spinner during submission
-- **Success/error handling** with user-friendly messages
-- **Data sanitization** and phone number formatting
-- **Controlled form inputs** with proper state management
-- **Image upload interface** with drag-and-drop functionality
-- **File validation** (type, size, format)
-
-### ✅ HighLevel Integration
-- **Contact creation** via HighLevel API v2.0
-- **Custom fields** for project details and lead source
-- **Automatic tagging** for lead organization
-- **Phone number formatting** for international compatibility
-- **Error handling** for API failures
-- **Image upload** to HighLevel Media Library
-- **File association** with contact records
-- **Media URL storage** in custom fields
+| Issue | Solution |
+|-------|----------|
+| **Photos reappear after delete** | Ensure `INITIAL_PHOTOS` in `constants.ts` is empty. The site should only render what comes from the API. |
+| **Delete fails (400/404)** | Check `useHighLevel.ts`. The DELETE request **must** include `?altId=...&altType=location` in the URL string. |
+| **Login not saving** | Authentication now uses `localStorage`. Ensure your browser isn't clearing storage on exit. |
