@@ -59,12 +59,13 @@ export const Admin: React.FC = () => {
         try {
             const response = await uploadFile(file);
             // GHL upload response usually has the url. Adjust based on actual API response.
-            // Assuming response has .url or .meta.url
+            // Assuming response has .url or .meta.url and ._id or .id
             const imageUrl = response.url || response.meta?.url;
+            const fileId = response._id || response.fileId || Date.now().toString(); // Fallback if ID missing
             
             if (imageUrl) {
                 const newPhoto: Photo = {
-                  id: Date.now().toString() + Math.random().toString(),
+                  id: fileId,
                   url: imageUrl,
                   title: file.name.split('.')[0], 
                   category: 'Uploads'
@@ -99,10 +100,11 @@ export const Admin: React.FC = () => {
            try {
                 const response = await uploadFile(file);
                 const imageUrl = response.url || response.meta?.url;
-                
+                const fileId = response._id || response.fileId || Date.now().toString();
+
                 if (imageUrl) {
                     const newPhoto: Photo = {
-                      id: Date.now().toString() + Math.random().toString(),
+                      id: fileId,
                       url: imageUrl,
                       title: file.name.split('.')[0],
                       category: 'Uploads'
