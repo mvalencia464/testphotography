@@ -16,7 +16,7 @@ interface Message {
 export const AdminChatbot: React.FC = () => {
     const { uploadFile, deleteFile } = useHighLevel();
     const { updateContent, config, saveToGitHub } = useSiteConfig();
-    const { photos, deletePhoto } = usePortfolio();
+    const { photos, deletePhoto, saveMetadataToGitHub } = usePortfolio();
 
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -89,8 +89,13 @@ export const AdminChatbot: React.FC = () => {
 
         if (action.action === 'save_changes') {
             try {
-                const result = await saveToGitHub();
-                return result.success ? result.message : `Failed: ${result.message}`;
+                const configRes = await saveToGitHub();
+                const portfolioRes = await saveMetadataToGitHub();
+
+                if (configRes.success && portfolioRes.success) {
+                    return "Successfully saved content and photo metadata to GitHub!";
+                }
+                return `Partial success or failure. Content: ${configRes.success ? 'Saved' : configRes.message}, Photos: ${portfolioRes.success ? 'Saved' : portfolioRes.message}`;
             } catch (error: any) {
                 return `Failed to save changes: ${error.message}`;
             }

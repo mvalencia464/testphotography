@@ -25,7 +25,7 @@ export const SiteConfigProvider: React.FC<{ children: ReactNode }> = ({ children
     };
   });
 
-  const { saveContent, loading: isSaving } = useGitHub();
+  const { saveFile, loading: isSaving } = useGitHub();
 
   useEffect(() => {
     localStorage.setItem('mb_site_config', JSON.stringify(config));
@@ -43,7 +43,11 @@ export const SiteConfigProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   const saveToGitHub = async () => {
-    return await saveContent(config.content);
+    return await saveFile(
+      'src/data/siteContent.json',
+      config.content,
+      `Update site content via Admin Panel - ${new Date().toISOString()}`
+    );
   };
 
   return (

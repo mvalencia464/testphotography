@@ -10,8 +10,8 @@ import { Photo, ThemeColor } from '../types';
 import { AdminChatbot } from '../components/AdminChatbot';
 
 export const Admin: React.FC = () => {
-  const { photos, addPhoto, deletePhoto, updatePhoto } = usePortfolio();
-  const { config, updateTheme } = useSiteConfig();
+  const { photos, addPhoto, deletePhoto, updatePhoto, saveMetadataToGitHub, isSaving: isSavingPortfolio } = usePortfolio();
+  const { config, updateTheme, saveToGitHub, isSaving: isSavingConfig } = useSiteConfig();
   const { isAuthenticated, login, logout } = useAuth();
   const { uploadFile } = useHighLevel();
 
@@ -213,6 +213,36 @@ export const Admin: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-6">
+            <button
+              onClick={async () => {
+                const configRes = await saveToGitHub();
+                const portfolioRes = await saveMetadataToGitHub();
+                if (configRes.success && portfolioRes.success) {
+                  showNotification("All changes saved and deployed!");
+                } else {
+                  showNotification(`Error: ${!configRes.success ? configRes.message : portfolioRes.message}`);
+                }
+              }}
+              disabled={isSavingConfig || isSavingPortfolio}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold uppercase tracking-wider transition-all text-xs ${
+                isSavingConfig || isSavingPortfolio
+                  ? 'bg-stone-800 text-stone-600 cursor-not-allowed'
+                  : 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg'
+              }`}
+            >
+              {isSavingConfig || isSavingPortfolio ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Deploying...
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  Save & Deploy
+                </>
+              )}
+            </button>
+
             <button
               onClick={logout}
               className="flex items-center gap-2 text-stone-400 hover:text-red-400 transition-colors text-sm font-medium"
@@ -434,42 +464,6 @@ export const Admin: React.FC = () => {
             {/* AI Assistant Chatbot */}
             <div className="md:col-span-2">
               <AdminChatbot />
-            </div>
-
-            {/* Save & Deploy Section */}
-            <div className="md:col-span-2 bg-stone-900 border border-stone-800 p-8 rounded-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-serif text-white font-bold mb-2">Deploy Changes</h3>
-                  <p className="text-sm text-stone-400">Save your content changes and deploy to production</p>
-                </div>
-                <button
-                  onClick={async () => {
-                    const result = await useSiteConfig().saveToGitHub();
-                    showNotification(result.message);
-                  }}
-                  disabled={useSiteConfig().isSaving}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold uppercase tracking-wider transition-all ${useSiteConfig().isSaving
-                      ? 'bg-stone-800 text-stone-600 cursor-not-allowed'
-                      : 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg'
-                    }`}
-                >
-                  {useSiteConfig().isSaving ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Deploying...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={18} />
-                      Save & Deploy
-                    </>
-                  )}
-                </button>
-              </div>
-              <p className="text-xs text-stone-600">
-                This will commit your changes to GitHub and trigger an automatic deployment via Netlify.
-              </p>
             </div>
 
             {/* Current Content Preview (Read Only) */}

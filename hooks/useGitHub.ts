@@ -21,12 +21,11 @@ export const useGitHub = () => {
         console.warn("GitHub token missing from .env.local");
     }
 
-    const saveContent = async (content: any): Promise<CommitResponse> => {
+    const saveFile = async (filePath: string, content: any, commitMessage: string): Promise<CommitResponse> => {
         setLoading(true);
         setError(null);
 
         try {
-            const filePath = 'src/data/siteContent.json';
             const contentString = JSON.stringify(content, null, 2);
             const encodedContent = btoa(unescape(encodeURIComponent(contentString)));
 
@@ -49,7 +48,7 @@ export const useGitHub = () => {
 
             // Step 2: Commit the updated file
             const commitPayload = {
-                message: `Update site content via Admin Panel - ${new Date().toISOString()}`,
+                message: commitMessage,
                 content: encodedContent,
                 branch: BRANCH,
                 ...(currentSha && { sha: currentSha }),
@@ -93,7 +92,7 @@ export const useGitHub = () => {
     };
 
     return {
-        saveContent,
+        saveFile,
         loading,
         error,
     };
